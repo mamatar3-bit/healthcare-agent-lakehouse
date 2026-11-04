@@ -26,9 +26,10 @@ variables:
     description: Unity Catalog catalog for this environment
   warehouse_id:
     description: SQL warehouse used by dbt, SQL procedures and Genie
+    default: a109f3dbd6ec4e3c
   llm_endpoint:
     description: Model Serving endpoint for the router and answer LLM
-    default: databricks-claude-sonnet-4-5
+    default: databricks-gpt-oss-120b
   embedding_endpoint:
     description: Embedding endpoint for Vector Search
     default: databricks-gte-large-en
