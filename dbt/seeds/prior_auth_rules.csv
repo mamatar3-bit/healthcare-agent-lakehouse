@@ -1,0 +1,15 @@
+payer_id,cpt_code,requires_prior_auth,standard_turnaround_days,urgent_turnaround_hours,notes
+PAY-01,70553,true,5,72,Requires documented neuro symptoms or failed conservative workup
+PAY-01,72148,true,5,72,Requires 6 weeks of conservative therapy unless red-flag symptoms
+PAY-01,27447,true,7,72,BMI and failed conservative therapy documentation required
+PAY-02,70553,true,5,72,Referral from PCP also required (HMO)
+PAY-02,72148,true,5,72,Referral from PCP also required (HMO)
+PAY-02,27447,true,7,72,Referral from PCP also required (HMO)
+PAY-02,93306,true,5,72,Cardiology referral required (HMO)
+PAY-03,70553,true,7,72,Medicare Advantage plan rules apply
+PAY-03,72148,true,7,72,Medicare Advantage plan rules apply
+PAY-03,27447,true,7,72,Medicare Advantage plan rules apply
+PAY-04,27447,true,14,72,State Medicaid managed care criteria
+PAY-04,93306,true,14,72,State Medicaid managed care criteria
+PAY-04,70553,true,14,72,State Medicaid managed care criteria
+PAY-05,27447,false,0,0,Self-pay: financial counseling estimate required instead of PA

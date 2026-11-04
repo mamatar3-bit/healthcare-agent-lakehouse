@@ -1,0 +1,8 @@
+# Local development and CI (unit tests run without a Databricks workspace)
+pytest>=8
+ruff>=0.6
+pyyaml>=6
+mlflow>=3.4
+langgraph>=0.3
+langchain-core>=0.3
+pydantic>=2

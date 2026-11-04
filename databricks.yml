@@ -1,0 +1,103 @@
+# Databricks Asset Bundle for the Healthcare Agent Lakehouse.
+#
+# One codebase in Git, promoted by CI/CD:
+#   personal  -> your own sandbox (databricks bundle deploy from your laptop)
+#   dev       -> shared Dev, deployed by CI on every merge to main
+#   qa        -> deployed by CI from the SAME commit after a reviewer approves
+#   prod      -> deployed by CI from a release tag (v*)
+#
+# Workspace hosts, warehouse IDs and Genie space IDs are NOT committed. CI supplies them per
+# GitHub Environment as DATABRICKS_HOST and BUNDLE_VAR_<name> variables (see .github/workflows).
+bundle:
+  name: healthcare_agent_lakehouse
+
+include:
+  - resources/*.yml
+
+sync:
+  exclude:
+    - "dbt/target/**"
+    - "dbt/dbt_packages/**"
+    - "dbt/logs/**"
+    - ".venv/**"
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for this environment
+  warehouse_id:
+    description: SQL warehouse used by dbt, SQL procedures and Genie
+  llm_endpoint:
+    description: Model Serving endpoint for the router and answer LLM
+    default: databricks-claude-sonnet-4-5
+  embedding_endpoint:
+    description: Embedding endpoint for Vector Search
+    default: databricks-gte-large-en
+  vector_search_endpoint:
+    description: Vector Search endpoint name
+    default: hc_vs_endpoint
+  genie_space_id:
+    description: Genie space over the gold tables (blank disables the Genie route)
+    default: ""
+  serving_endpoint_name:
+    description: Name of the agent's serving endpoint
+  eval_pass_threshold:
+    description: Minimum routing accuracy (0-1) required before deploy
+    default: "0.85"
+  service_principal:
+    description: Application ID of the CI/CD service principal that owns Dev/QA/Prod resources
+    default: ""
+
+targets:
+  # Your sandbox. Resources get a "[dev <you>]" prefix and schedules are paused.
+  # Uses your CLI profile: `databricks auth login --host <dev-workspace-url>`
+  personal:
+    mode: development
+    default: true
+    variables:
+      catalog: hc_sandbox
+      serving_endpoint_name: hc-agent-sandbox
+
+  dev:
+    presets:
+      name_prefix: "[dev] "
+      trigger_pause_status: PAUSED
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: hc_dev
+      serving_endpoint_name: hc-agent-dev
+    run_as:
+      service_principal_name: ${var.service_principal}
+    permissions:
+      - group_name: hc-data-engineers
+        level: CAN_MANAGE_RUN
+
+  qa:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: hc_qa
+      serving_endpoint_name: hc-agent-qa
+      eval_pass_threshold: "0.90"
+    run_as:
+      service_principal_name: ${var.service_principal}
+    permissions:
+      - group_name: hc-data-engineers
+        level: CAN_VIEW
+      - group_name: hc-qa-testers
+        level: CAN_MANAGE_RUN
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: hc_prod
+      serving_endpoint_name: hc-agent-prod
+      eval_pass_threshold: "0.92"
+    run_as:
+      service_principal_name: ${var.service_principal}
+    permissions:
+      - group_name: hc-data-engineers
+        level: CAN_VIEW

@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: "{{ target.database }}"
+    schema: bronze
+    description: Raw synthetic EHR and claims extracts written by src/01_generate_bronze.py
+    tables:
+      - name: patients
+        columns:
+          - name: patient_id
+            data_tests: [unique, not_null]
+      - name: providers
+      - name: encounters
+        config:
+          loaded_at_field: _loaded_at
+          freshness:
+            warn_after: {count: 36, period: hour}
+      - name: diagnoses
+      - name: claims
+      - name: prescriptions
+      - name: lab_results

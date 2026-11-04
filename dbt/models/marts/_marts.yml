@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  - name: dim_patient
+    description: >
+      RESTRICTED identified patient dimension (synthetic). Grant only to care-management roles;
+      analytics and Genie use dim_patient_deid.
+    columns:
+      - name: patient_id
+        description: Patient identifier (PAT-nnnnnn)
+        data_tests: [unique, not_null]
+      - name: payer_id
+        data_tests:
+          - relationships: {arguments: {to: ref('payers'), field: payer_id}}
+
+  - name: dim_patient_deid
+    description: De-identified patient dimension (age band, sex, 3-digit ZIP, payer). Safe for population analytics.
+    columns:
+      - name: patient_id
+        description: Patient identifier (PAT-nnnnnn)
+        data_tests: [unique, not_null]
+      - name: age_band
+        description: Age group (0-17, 18-34, 35-49, 50-64, 65-79, 80+)
+        data_tests:
+          - accepted_values: {arguments: {values: ['0-17', '18-34', '35-49', '50-64', '65-79', '80+']}}
+      - name: payer_type
+        description: Commercial, Medicare, Medicaid or Self-pay
+
+  - name: dim_provider
+    description: Providers with specialty, facility and PCP panel size
+    columns:
+      - name: provider_id
+        data_tests: [unique, not_null]
+      - name: panel_size
+        description: Number of patients attributed to this provider as PCP
+
+  - name: dim_payer
+    description: Health plans with filing and appeal windows
+
+  - name: fct_encounters
+    description: One row per encounter (outpatient, telehealth, emergency, inpatient) with readmission flags
+    columns:
+      - name: encounter_id
+        data_tests: [unique, not_null]
+      - name: patient_id
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_patient_deid'), field: patient_id}}
+      - name: encounter_type
+        description: outpatient, telehealth, emergency or inpatient
+        data_tests:
+          - accepted_values: {arguments: {values: [outpatient, telehealth, emergency, inpatient]}}
+      - name: primary_dx_code
+        description: Primary ICD-10-CM diagnosis code
+        data_tests:
+          - relationships: {arguments: {to: ref('icd10_codes'), field: dx_code}}
+      - name: length_of_stay_days
+        description: Discharge date minus admit date, in days (0 for same-day visits)
+      - name: readmitted_within_30d
+        description: >
+          True when this inpatient stay was followed by another inpatient admission
+          within 30 days of discharge (all-cause). Use for readmission rates.
+      - name: is_readmission
+        description: True when this inpatient stay began within 30 days of a prior discharge
+
+  - name: fct_claims
+    description: >
+      Claim lines (incremental, merged on claim_id). Amounts are USD. is_denied covers denied and
+      appealed claims. denial_code CO-197 means prior authorization was missing.
+    columns:
+      - name: claim_id
+        data_tests: [unique, not_null]
+      - name: claim_status
+        description: paid, denied, pending or appealed
+        data_tests:
+          - accepted_values: {arguments: {values: [paid, denied, pending, appealed]}}
+      - name: cpt_code
+        data_tests:
+          - relationships: {arguments: {to: ref('cpt_codes'), field: cpt_code}}
+      - name: billed_amount
+        description: Charge submitted to the payer (USD)
+      - name: paid_amount
+        description: Amount paid by the payer (USD)
+      - name: appeal_deadline
+        description: Last day to file an appeal for a denied claim
+      - name: days_to_adjudicate
+        description: Days from submission to payer decision
+
+  - name: fct_prescriptions
+    description: Prescription fills with payer formulary tier
+    columns:
+      - name: rx_id
+        data_tests: [unique, not_null]
+      - name: is_active
+        description: True if the supply including refills extends to today or later
+
+  - name: fct_lab_results
+    description: Lab results with LOINC code and abnormal flag (low / high / normal)
+    columns:
+      - name: lab_id
+        data_tests: [unique, not_null]
+
+  - name: patient_risk_features
+    description: One row per patient with chronic conditions, utilization, last A1c, active meds and LACE inputs
+    columns:
+      - name: patient_id
+        data_tests: [unique, not_null]
+      - name: charlson_score
+        description: Simplified Charlson comorbidity score (each condition counted once)
+      - name: ed_visits_6m
+        description: Emergency visits in the last 6 months
+
+  - name: agg_monthly_utilization
+    description: Encounters, unique patients, inpatient LOS and paid amounts by month, facility, payer type and encounter type
+
+  - name: agg_readmissions_monthly
+    description: >
+      30-day all-cause readmission rate by discharge month, facility, payer type and diagnosis category.
+      To get an overall rate, sum readmissions_30d and index_admissions before dividing.
+    columns:
+      - name: readmission_rate_30d
+        description: readmissions_30d / index_admissions (0-1)
+
+  - name: agg_claim_denials_monthly
+    description: Claim counts, denial rate and prior-auth (CO-197) denials by month, payer and CPT category

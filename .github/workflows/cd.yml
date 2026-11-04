@@ -1,0 +1,79 @@
+# Continuous delivery: merge to main -> Dev -> (approval) -> QA, always the same commit.
+#
+# GitHub setup (Settings -> Environments), one environment per stage: dev, qa
+#   vars:    DATABRICKS_HOST, WAREHOUSE_ID, GENIE_SPACE_ID
+#   secrets: DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET   (OAuth M2M for a service principal)
+#   qa:      add "Required reviewers" so promotion waits for a human approval
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_pipeline:
+        description: Run the end-to-end job after deploying
+        type: boolean
+        default: true
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt && ruff check agent src tests && pytest -q
+
+  deploy-dev:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      BUNDLE_VAR_warehouse_id: ${{ vars.WAREHOUSE_ID }}
+      BUNDLE_VAR_genie_space_id: ${{ vars.GENIE_SPACE_ID }}
+      BUNDLE_VAR_service_principal: ${{ secrets.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t dev
+      - run: databricks bundle deploy -t dev
+      - name: Run end-to-end pipeline (data -> dbt -> SQL -> index -> agent eval -> deploy)
+        if: github.event_name == 'push' || inputs.run_pipeline
+        run: databricks bundle run -t dev hc_agent_end_to_end
+
+  promote-qa:
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: qa          # waits here for the required reviewer
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      BUNDLE_VAR_warehouse_id: ${{ vars.WAREHOUSE_ID }}
+      BUNDLE_VAR_genie_space_id: ${{ vars.GENIE_SPACE_ID }}
+      BUNDLE_VAR_service_principal: ${{ secrets.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}   # exactly what passed in Dev
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t qa
+      - run: databricks bundle deploy -t qa
+      - name: Run end-to-end pipeline in QA
+        run: databricks bundle run -t qa hc_agent_end_to_end
+      - name: Tag the commit as QA-approved
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag -f "qa-$(date -u +%Y%m%d-%H%M)-${GITHUB_SHA::7}"
+          git push origin --tags

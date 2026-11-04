@@ -1,0 +1,10 @@
+drug_a,drug_b,severity,effect,management
+warfarin,ibuprofen,major,Increased bleeding risk,Avoid combination; consider acetaminophen and monitor INR
+warfarin,amiodarone,major,Amiodarone raises warfarin levels and INR,Reduce warfarin dose and monitor INR closely
+amiodarone,simvastatin,major,Increased risk of myopathy and rhabdomyolysis,Limit simvastatin dose or switch statin
+clarithromycin,simvastatin,contraindicated,Markedly increased statin exposure and myopathy risk,Do not combine; hold statin during antibiotic course
+sertraline,tramadol,major,Serotonin syndrome and seizure risk,Avoid or use lowest dose with monitoring
+lisinopril,spironolactone,major,Hyperkalemia,Monitor potassium and renal function
+apixaban,ibuprofen,moderate,Increased bleeding risk,Avoid regular NSAID use
+furosemide,lisinopril,moderate,Additive hypotension and renal effects,Monitor blood pressure and creatinine
+apixaban,clarithromycin,moderate,Increased apixaban exposure,Monitor for bleeding

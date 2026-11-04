@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_patients
+    description: Typed patient records with age and age band
+    columns:
+      - name: patient_id
+        data_tests: [unique, not_null]
+  - name: stg_encounters
+    description: Deduplicated encounters with length of stay
+    columns:
+      - name: encounter_id
+        data_tests: [unique, not_null]
+  - name: stg_claims
+    description: Deduplicated claim lines with denial code parsed from the reason
+    columns:
+      - name: claim_id
+        data_tests: [unique, not_null]
+  - name: stg_diagnoses
+  - name: stg_prescriptions
+  - name: stg_lab_results
+  - name: stg_providers

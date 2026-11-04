@@ -1,0 +1,31 @@
+# Production: deploy a release tag that already passed QA.
+#   git tag v1.0.0 <qa-approved-sha> && git push origin v1.0.0
+name: Release to Prod
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: prod        # required reviewers + tag protection recommended
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      BUNDLE_VAR_warehouse_id: ${{ vars.WAREHOUSE_ID }}
+      BUNDLE_VAR_genie_space_id: ${{ vars.GENIE_SPACE_ID }}
+      BUNDLE_VAR_service_principal: ${{ secrets.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require that this commit passed QA
+        run: |
+          if ! git tag --points-at "$GITHUB_SHA" | grep -q '^qa-'; then
+            echo "::error::Commit $GITHUB_SHA has no qa-* tag. Promote it through QA first."; exit 1
+          fi
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t prod
+      - run: databricks bundle run -t prod hc_agent_end_to_end

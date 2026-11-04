@@ -1,0 +1,38 @@
+name: healthcare_lakehouse
+version: "1.0.0"
+config-version: 2
+profile: healthcare_lakehouse
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: target
+clean-targets: [target, dbt_packages]
+
+vars:
+  readmission_window_days: 30
+
+models:
+  healthcare_lakehouse:
+    # Push dbt descriptions into Unity Catalog comments. Genie reads these,
+    # so good docs here directly improve Genie's SQL.
+    +persist_docs:
+      relation: true
+      columns: true
+    +file_format: delta
+    staging:
+      +schema: silver
+      +materialized: view
+    marts:
+      +schema: gold
+      +materialized: table
+      +tblproperties:
+        delta.enableChangeDataFeed: "true"
+
+seeds:
+  healthcare_lakehouse:
+    +schema: ref
+    +persist_docs:
+      relation: true
+      columns: true

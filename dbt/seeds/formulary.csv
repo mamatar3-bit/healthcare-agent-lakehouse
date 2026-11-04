@@ -1,0 +1,27 @@
+payer_id,drug_name,tier,requires_prior_auth,step_therapy,quantity_limit
+PAY-01,metformin,1,false,,
+PAY-01,lisinopril,1,false,,
+PAY-01,atorvastatin,1,false,,
+PAY-01,apixaban,3,false,,60 tablets/30 days
+PAY-01,semaglutide,3,true,Trial of metformin for 90 days,1 pen/28 days
+PAY-01,insulin glargine,2,false,,
+PAY-01,adalimumab,5,true,Trial of one conventional DMARD,2 pens/28 days
+PAY-01,sertraline,1,false,,
+PAY-02,metformin,1,false,,
+PAY-02,apixaban,2,false,,
+PAY-02,semaglutide,3,true,Trial of metformin for 90 days,1 pen/28 days
+PAY-02,tramadol,2,false,,Max 30-day supply
+PAY-03,metformin,1,false,,
+PAY-03,lisinopril,1,false,,
+PAY-03,atorvastatin,1,false,,
+PAY-03,apixaban,3,false,,
+PAY-03,warfarin,1,false,,
+PAY-03,insulin glargine,3,false,,
+PAY-03,semaglutide,3,true,Diabetes diagnosis required; not covered for weight loss,1 pen/28 days
+PAY-03,amiodarone,2,false,,
+PAY-04,metformin,1,false,,
+PAY-04,lisinopril,1,false,,
+PAY-04,apixaban,2,true,Trial of warfarin unless contraindicated,
+PAY-04,warfarin,1,false,,
+PAY-04,semaglutide,4,true,Trial of metformin and one other oral agent,1 pen/28 days
+PAY-04,sertraline,1,false,,

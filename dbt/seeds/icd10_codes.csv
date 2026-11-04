@@ -1,0 +1,17 @@
+dx_code,dx_description,dx_category,is_chronic,charlson_weight
+E11.9,Type 2 diabetes mellitus without complications,Endocrine,true,1
+I10,Essential (primary) hypertension,Circulatory,true,0
+I50.9,"Heart failure, unspecified",Circulatory,true,1
+J44.1,Chronic obstructive pulmonary disease with acute exacerbation,Respiratory,true,1
+N18.30,"Chronic kidney disease, stage 3 unspecified",Renal,true,2
+F32.9,"Major depressive disorder, single episode, unspecified",Behavioral,true,0
+E78.5,"Hyperlipidemia, unspecified",Endocrine,true,0
+I48.91,Unspecified atrial fibrillation,Circulatory,true,0
+J18.9,"Pneumonia, unspecified organism",Respiratory,false,0
+I21.4,Non-ST elevation myocardial infarction,Circulatory,false,1
+A41.9,"Sepsis, unspecified organism",Infectious,false,0
+S72.001A,"Fracture of unspecified part of neck of right femur, initial encounter",Injury,false,0
+J06.9,"Acute upper respiratory infection, unspecified",Respiratory,false,0
+M54.50,"Low back pain, unspecified",Musculoskeletal,false,0
+N39.0,"Urinary tract infection, site not specified",Genitourinary,false,0
+Z00.00,Encounter for general adult medical examination without abnormal findings,Preventive,false,0

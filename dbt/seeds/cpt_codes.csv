@@ -1,0 +1,15 @@
+cpt_code,cpt_description,cpt_category
+99213,"Office/outpatient visit, established patient, low complexity",E&M
+99214,"Office/outpatient visit, established patient, moderate complexity",E&M
+99285,"Emergency department visit, high complexity",E&M
+99223,"Initial hospital inpatient care, high complexity",E&M
+70553,MRI brain without and with contrast,Imaging
+72148,"MRI lumbar spine, without contrast",Imaging
+93306,Transthoracic echocardiogram complete with Doppler,Cardiology
+45378,"Colonoscopy, diagnostic",Procedure
+27447,Total knee arthroplasty,Surgery
+80053,Comprehensive metabolic panel,Lab
+83036,Hemoglobin A1c,Lab
+71046,"Chest X-ray, 2 views",Imaging
+97110,Therapeutic exercise,Therapy
+93000,Electrocardiogram with interpretation,Cardiology

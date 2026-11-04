@@ -1,0 +1,63 @@
+# Runs on every pull request: nothing is deployed.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint Python
+        run: ruff check agent src tests
+      - name: Unit tests (routing, agent graph with fakes, data generator, chunking)
+        run: pytest -q
+
+  dbt:
+    name: dbt parse
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: https://example.cloud.databricks.com
+      DATABRICKS_WAREHOUSE_ID: ci
+      DATABRICKS_TOKEN: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install "dbt-databricks>=1.10,<2"
+      - name: Parse dbt project (no warehouse needed)
+        working-directory: dbt
+        run: |
+          mkdir -p ~/.dbt && cp profiles.example.yml ~/.dbt/profiles.yml
+          dbt deps
+          dbt parse --warn-error
+
+  bundle:
+    name: Validate bundle against Dev
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      BUNDLE_VAR_warehouse_id: ${{ vars.WAREHOUSE_ID }}
+      BUNDLE_VAR_genie_space_id: ${{ vars.GENIE_SPACE_ID }}
+      BUNDLE_VAR_service_principal: ${{ secrets.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t dev

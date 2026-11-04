@@ -1,0 +1,6 @@
+payer_id,payer_name,payer_type,timely_filing_days,appeal_window_days
+PAY-01,Summit Health PPO,Commercial,90,180
+PAY-02,Summit Health HMO,Commercial,90,180
+PAY-03,Bluepoint Medicare Advantage,Medicare,365,65
+PAY-04,Commonwealth Medicaid Managed Care,Medicaid,365,60
+PAY-05,Self-pay,Self-pay,0,0

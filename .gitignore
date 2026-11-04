@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# MLflow local runs
+mlruns/
+mlflow.db
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/.user.yml
+profiles.yml
+
+# Databricks bundle
+.databricks/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

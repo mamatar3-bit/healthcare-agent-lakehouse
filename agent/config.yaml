@@ -1,0 +1,27 @@
+# Development config for running agent.py interactively in the dev workspace.
+# The 05_log_and_evaluate_agent task builds the same structure per environment
+# (dev/qa/prod catalog, Genie space, endpoints) and logs it with the model.
+llm_endpoint: databricks-claude-sonnet-4-5
+catalog: hc_dev
+genie_space_id: ""            # blank disables the Genie route
+genie_description: >
+  De-identified population analytics for the network: encounters, inpatient admissions, length of stay,
+  30-day readmission rates, claims, denial rates, prior-auth denials, prescriptions and labs, by month,
+  facility, payer type, diagnosis category and age band.
+vector_search_index: hc_dev.ai.policy_chunks_index
+num_doc_results: 4
+uc_function_names:
+  - hc_dev.ai.get_patient_summary
+  - hc_dev.ai.get_claim_status
+  - hc_dev.ai.check_prior_auth
+  - hc_dev.ai.get_formulary_status
+  - hc_dev.ai.check_drug_interaction
+  - hc_dev.ai.calculate_readmission_risk
+  - hc_dev.ai.get_care_management_status
+  - hc_dev.ai.get_appeal_status
+
+# Routing: "hybrid" (rules when confident, LLM otherwise), "rules" or "llm"
+routing_mode: hybrid
+rule_confidence_threshold: 0.7
+max_tool_iterations: 4
+enable_fallback: true

@@ -1,0 +1,62 @@
+version: 2
+
+seeds:
+  - name: payers
+    description: Health plans the network bills. Synthetic plan names.
+    config:
+      column_types: {payer_id: string, payer_name: string, payer_type: string, timely_filing_days: int, appeal_window_days: int}
+    columns:
+      - name: payer_id
+        description: Payer identifier (PAY-nn)
+        data_tests: [unique, not_null]
+      - name: payer_type
+        description: Commercial, Medicare, Medicaid or Self-pay
+        data_tests:
+          - accepted_values: {arguments: {values: [Commercial, Medicare, Medicaid, Self-pay]}}
+      - name: timely_filing_days
+        description: Days after the date of service a claim must be filed
+      - name: appeal_window_days
+        description: Days after a denial in which an appeal can be filed
+
+  - name: icd10_codes
+    description: ICD-10-CM diagnosis codes used in this dataset
+    config:
+      column_types: {dx_code: string, dx_description: string, dx_category: string, is_chronic: boolean, charlson_weight: int}
+    columns:
+      - name: dx_code
+        data_tests: [unique, not_null]
+      - name: is_chronic
+        description: True for chronic conditions counted in risk features
+      - name: charlson_weight
+        description: Simplified Charlson comorbidity weight used in the LACE score
+
+  - name: cpt_codes
+    description: CPT procedure codes used in this dataset
+    config:
+      column_types: {cpt_code: string, cpt_description: string, cpt_category: string}
+    columns:
+      - name: cpt_code
+        data_tests: [unique, not_null]
+
+  - name: prior_auth_rules
+    description: Which payer requires prior authorization for which CPT code (absence of a row means no PA)
+    config:
+      column_types: {payer_id: string, cpt_code: string, requires_prior_auth: boolean, standard_turnaround_days: int, urgent_turnaround_hours: int, notes: string}
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments: {combination_of_columns: [payer_id, cpt_code]}
+
+  - name: formulary
+    description: Drug coverage tier and restrictions by payer
+    config:
+      column_types: {payer_id: string, drug_name: string, tier: int, requires_prior_auth: boolean, step_therapy: string, quantity_limit: string}
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments: {combination_of_columns: [payer_id, drug_name]}
+
+  - name: drug_interactions
+    description: >
+      Demo drug-drug interaction reference (NOT exhaustive and NOT for clinical decision support).
+      Pairs are stored once; look up in both orders.
+    config:
+      column_types: {drug_a: string, drug_b: string, severity: string, effect: string, management: string}
