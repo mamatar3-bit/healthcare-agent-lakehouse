@@ -1,7 +1,7 @@
 # Development config for running agent.py interactively in the dev workspace.
 # The 05_log_and_evaluate_agent task builds the same structure per environment
 # (dev/qa/prod catalog, Genie space, endpoints) and logs it with the model.
-llm_endpoint: databricks-claude-sonnet-4-5
+llm_endpoint: databricks-gpt-oss-120b
 catalog: hc_dev
 genie_space_id: ""            # blank disables the Genie route
 genie_description: >
