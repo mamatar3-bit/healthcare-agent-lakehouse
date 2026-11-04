@@ -61,7 +61,8 @@ SQL SECURITY INVOKER
 MODIFIES SQL DATA
 COMMENT 'Adds denied claims that can still be appealed to ops.appeal_queue, re-prioritizes open items and expires missed deadlines'
 AS BEGIN
-  DECLARE before_count INT DEFAULT (SELECT count(*) FROM ${catalog}.ops.appeal_queue);
+  DECLARE before_count INT;
+  SET before_count = (SELECT count(*) FROM ${catalog}.ops.appeal_queue);
 
   MERGE INTO ${catalog}.ops.appeal_queue AS t
   USING (
@@ -167,7 +168,8 @@ SQL SECURITY INVOKER
 MODIFIES SQL DATA
 COMMENT 'Runs business-rule data quality checks on the gold layer and logs them to ops.dq_results'
 AS BEGIN
-  DECLARE v_run STRING DEFAULT uuid();
+  DECLARE v_run STRING;
+  SET v_run = uuid();
 
   INSERT INTO ${catalog}.ops.dq_results
   SELECT v_run, check_name, failed_rows, failed_rows = 0, current_timestamp()
