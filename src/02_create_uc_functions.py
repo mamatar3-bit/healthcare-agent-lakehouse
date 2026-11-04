@@ -161,14 +161,19 @@ CREATE OR REPLACE FUNCTION {ai}.calculate_readmission_risk(
 )
 RETURNS STRING
 COMMENT 'Calculates the LACE 30-day readmission risk score for ONE patient based on their most recent inpatient stay, comorbidities and ED use. Use for "what is the readmission risk for PAT-..." questions.'
-RETURN SELECT COALESCE(MAX(
-    CASE WHEN last_inpatient_los IS NULL
-      THEN CONCAT('Patient ', patient_id, ' has no inpatient stay on record, so LACE does not apply.')
-      ELSE CONCAT('Patient ', patient_id, ' (last discharge ', CAST(last_discharge_date AS STRING), '): ',
-                  {ai}.lace_score(CAST(last_inpatient_los AS INT), TRUE, CAST(charlson_score AS INT), CAST(ed_visits_6m AS INT)))
-    END), CONCAT('No patient found with ID ', target_patient_id))
-  FROM {gold}.patient_risk_features
-  WHERE patient_id = upper(trim(target_patient_id))
+RETURN SELECT CASE
+    WHEN n = 0 THEN CONCAT('No patient found with ID ', upper(trim(target_patient_id)))
+    WHEN los IS NULL THEN CONCAT('Patient ', pid, ' has no inpatient stay on record, so LACE does not apply.')
+    ELSE CONCAT('Patient ', pid, ' (last discharge ', CAST(discharged AS STRING), '): ',
+                {ai}.lace_score(CAST(los AS INT), TRUE, CAST(charlson AS INT), CAST(ed AS INT)))
+  END
+  FROM (
+    -- aggregate plain columns first; the Python UDF runs on the result, outside the aggregate
+    SELECT count(*) AS n, max(patient_id) AS pid, max(last_inpatient_los) AS los,
+           max(charlson_score) AS charlson, max(ed_visits_6m) AS ed, max(last_discharge_date) AS discharged
+    FROM {gold}.patient_risk_features
+    WHERE patient_id = upper(trim(target_patient_id))
+  )
 """)
 
 # COMMAND ----------
