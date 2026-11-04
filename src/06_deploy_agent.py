@@ -32,7 +32,7 @@ from mlflow import MlflowClient
 deployment = agents.deploy(
     UC_MODEL, int(version),
     endpoint_name=endpoint,
-    scale_to_zero=(env == "dev"),
+    scale_to_zero=(env != "prod"),
     tags={"env": env, "project": "healthcare-agent-lakehouse"},
 )
 MlflowClient(registry_uri="databricks-uc").set_registered_model_alias(UC_MODEL, "champion", int(version))
