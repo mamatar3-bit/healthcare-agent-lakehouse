@@ -6,7 +6,7 @@
 --   LACE >= 10, or 2+ inpatient admissions in 12 months, or 3+ ED visits in 6 months,
 --   or 2+ chronic conditions with HbA1c > 9% in the last 6 months.
 CREATE OR REPLACE PROCEDURE ${catalog}.ops.sp_refresh_care_management_worklist(
-  IN  as_of DATE DEFAULT current_date() COMMENT 'Evaluation date',
+  IN  as_of DATE COMMENT 'Evaluation date',
   OUT active_count INT COMMENT 'Patients with status new or enrolled after the refresh')
 LANGUAGE SQL
 SQL SECURITY INVOKER
@@ -106,7 +106,7 @@ END
 CREATE OR REPLACE PROCEDURE ${catalog}.ops.sp_log_appeal(
   IN  p_claim_id STRING COMMENT 'Claim ID, e.g. CLM-0001234',
   IN  p_action   STRING COMMENT 'start, submit, escalate, won or lost',
-  IN  p_notes    STRING DEFAULT NULL COMMENT 'Free-text note for the audit trail',
+  IN  p_notes    STRING COMMENT 'Free-text note for the audit trail',
   OUT result     STRING COMMENT 'Summary of what changed')
 LANGUAGE SQL
 SQL SECURITY INVOKER
@@ -160,7 +160,7 @@ END
 -- @@
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE ${catalog}.ops.sp_run_data_quality_checks(
-  IN  fail_on_error BOOLEAN DEFAULT TRUE COMMENT 'Raise an error when any check fails',
+  IN  fail_on_error BOOLEAN COMMENT 'Raise an error when any check fails',
   OUT failed_checks INT COMMENT 'Number of failed checks in this run')
 LANGUAGE SQL
 SQL SECURITY INVOKER
