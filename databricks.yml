@@ -38,7 +38,7 @@ variables:
     default: hc_vs_endpoint
   genie_space_id:
     description: Genie space over the gold tables (blank disables the Genie route)
-    default: ""
+    default: 01f1d9460d67101fa247c91d826de125
   serving_endpoint_name:
     description: Name of the agent's serving endpoint
   eval_pass_threshold:
