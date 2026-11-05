@@ -24,7 +24,8 @@ from uuid import uuid4
 
 import mlflow
 import routing as R
-from databricks_langchain import ChatDatabricks, VectorSearchRetrieverTool
+from databricks_langchain import ChatDatabricks, DatabricksVectorSearch
+
 from databricks_langchain.genie import GenieAgent
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
@@ -120,13 +121,11 @@ def build_graph(cfg: dict):
     uc_tools = UCFunctionToolkit(function_names=list(cfg["uc_function_names"]),
                                  client=DatabricksFunctionClient()).tools
     tools_by_name = {t.name: t for t in uc_tools}
-    retriever = VectorSearchRetrieverTool(
-        index_name=cfg["vector_search_index"],
-        num_results=int(cfg.get("num_doc_results", 4)),
-        columns=["chunk_id", "doc_title", "section", "content"],
-        tool_name="policy_retriever",
-        tool_description="Searches the health network's policies and protocols.",
+    vector_store = DatabricksVectorSearch(
+    index_name=cfg["vector_search_index"],
+    columns=["chunk_id", "doc_title", "section", "content"],
     )
+    num_docs = int(cfg.get("num_doc_results", 4))
     genie = (
         GenieAgent(genie_space_id=cfg["genie_space_id"], genie_agent_name="Genie",
                    description=cfg.get("genie_description", ""))
@@ -217,15 +216,19 @@ def build_graph(cfg: dict):
     def docs_node(state: AgentState) -> dict:
         q = state["standalone_question"]
         try:
-            docs = retriever.invoke(q)
+            docs = vector_store.similarity_search(q, k=num_docs)
             if not docs:
                 return {"results": {R.DOCS: {"ok": False, "error": "no documents retrieved"}}, "routes_tried": [R.DOCS]}
             labels, blocks = [], []
             for d in docs:
-                meta = d.metadata or {}
-                label = f"{meta.get('doc_title', 'Policy')} — {meta.get('section', '')}".strip(" —")
+                if isinstance(d, str):  # defensive: some library versions return plain text
+                    label, text = "Policy documents", d
+                else:
+                    meta = d.metadata or {}
+                    label = f"{meta.get('doc_title', 'Policy')} — {meta.get('section', '')}".strip(" —")
+                    text = d.page_content
                 labels.append(label)
-                blocks.append(f"[{label}]\n{d.page_content}")
+                blocks.append(f"[{label}]\n{text}")
             answer = _text(llm.invoke([SystemMessage(DOCS_PROMPT.format(context="\n\n".join(blocks))),
                                        HumanMessage(q)]).content).strip()
             ok = bool(answer) and "NOT_IN_DOCS" not in answer
