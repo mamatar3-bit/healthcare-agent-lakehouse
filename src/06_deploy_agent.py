@@ -26,13 +26,31 @@ version = dbutils.jobs.taskValues.get(taskKey="log_and_evaluate", key="model_ver
 
 # COMMAND ----------
 
+import time
+
 from databricks import agents
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.errors import NotFound
 from mlflow import MlflowClient
+
+# Free Edition (and small quotas) can't run the old and new versions side by side during an
+# update, so outside QA/Prod we delete the existing endpoint first and deploy fresh.
+if env not in ("qa", "prod"):
+    w = WorkspaceClient()
+    try:
+        w.serving_endpoints.get(endpoint)
+        print(f"Deleting existing endpoint {endpoint} to free capacity")
+        w.serving_endpoints.delete(endpoint)
+        for _ in range(30):
+            time.sleep(10)
+            w.serving_endpoints.get(endpoint)
+    except NotFound:
+        pass
 
 deployment = agents.deploy(
     UC_MODEL, int(version),
     endpoint_name=endpoint,
-    scale_to_zero=(env != "prod"),
+    scale_to_zero=(env != "prod"),  # Free Edition and sandboxes require scale to zero
     tags={"env": env, "project": "healthcare-agent-lakehouse"},
 )
 MlflowClient(registry_uri="databricks-uc").set_registered_model_alias(UC_MODEL, "champion", int(version))
